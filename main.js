@@ -2,6 +2,7 @@ const {app, BrowserWindow} = require('electron')
 const path = require('path')
 const url = require('url')
 const ipc = require('ipc')
+const updater = require('electron-updater')
 
 let mainWindow
 
@@ -24,7 +25,18 @@ function createWindow() {
   })
 }
 
-app.on('ready', createWindow)
+app.on('ready', () => {
+	updater.on('ready', createWindow)
+	
+	updater.on('updateRequired', () => {
+		app.quit()
+	})
+	
+	updater.on('updateAvailable', () => {
+		mainWindow.webContents.send('update-available')
+	})
+	updater.start()
+})
 
 //Kill the app if all windows are closed
 app.on('window-all-closed', () => {
