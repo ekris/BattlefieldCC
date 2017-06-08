@@ -26,14 +26,19 @@ function createWindow() {
 
 app.on('ready', createWindow)
 
+//Kill the app if all windows are closed
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    app.quit() 
+    app.quit()
   }
+})
+//Kill the app if the close window button is clicked
+ipc.on('close-window', () => {
+	app.quit()
 })
 
 app.on('activate', () => {
   if (mainWindow === null) {
-    createWindow() 
+    createWindow()
   }
 })
