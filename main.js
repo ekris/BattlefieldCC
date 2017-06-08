@@ -8,7 +8,9 @@ let mainWindow
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 800,
-    height: 600
+    height: 600,
+    resizable: false,
+    frame: false
   })
   
   mainWindow.loadURL(url.format({
