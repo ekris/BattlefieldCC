@@ -1,8 +1,8 @@
-const {app, BrowserWindow} = require('electron')
+const {app, BrowserWindow, ipcRenderer} = require('electron')
 const path = require('path')
 const url = require('url')
 const ipc = require('ipc')
-const updater = require('electron-updater')
+const updater = require('electron-updater').autoUpdater
 
 let mainWindow
 
@@ -25,17 +25,43 @@ function createWindow() {
   })
 }
 
+//autoUpdater
+updater.autoDownload = false
+
+//autoUpdater event listeners
+updater.on('checking-for-update', () => {
+	mainWindow.webContents.send('update-check', "Checking for update...")
+})
+updater.on('update-available', (ev, info) => {
+	mainWindow.webContents.send('update-available', "There is an update available. Click the update button to download and install it.")
+})
+updater.on('update-not-available', (ev, info) => {
+	mainWindow.webContents.send('update-none', "Application is up to date.")
+})
+updater.on('error', (ev, err) => {
+	mainWindow.webContents.send('update-error', "Error while checking for update.")
+})
+updater.on('download-progress', (ev, progress) => {
+	mainWindow.webContents.send('download-progress', (progressObj) => {
+		let dl_message = "Download speed: " + Math.round(progressObj.bytesPerSecond * 100.0) / 100.0
+		dl_message = dl_message + ' - ' + progressObj.transferred + "/" + progressObj.total
+		mainWindow.webContents.send('dl-message', dl_message)
+	})
+})
+updater.on('update-downloaded', (ev, info) => {
+	updater.quitAndInstall()
+})
+
+
 app.on('ready', () => {
 	updater.on('ready', createWindow)
 	
-	updater.on('updateRequired', () => {
-		app.quit()
-	})
+	updater.checkForUpdates()
 	
-	updater.on('updateAvailable', () => {
-		mainWindow.webContents.send('update-available')
+	//If the user clicked the Download & Install button
+	ipc.on('app-update', () => {
+		updater.downloadUpdate()
 	})
-	updater.start()
 })
 
 //Kill the app if all windows are closed
